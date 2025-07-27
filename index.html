@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel de Imagens Firebase</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <h2>Pastas</h2>
+      <input type="text" id="newFolder" placeholder="Nova pasta">
+      <button onclick="createFolder()">Criar</button>
+      <ul id="folderList"></ul>
+    </aside>
+
+    <main class="main-content">
+      <h1>Galeria de Imagens</h1>
+      <div class="controls">
+        <select id="selectedFolder"></select>
+        <input type="file" id="imageInput" multiple>
+        <button onclick="uploadImages()">Enviar</button>
+        <button onclick="loadImages()">Atualizar</button>
+      </div>
+      <div id="gallery" class="gallery"></div>
+    </main>
+  </div>
+
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" alt="">
+  </div>
+
+  <script src="firebase.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
