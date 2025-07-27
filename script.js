@@ -1,84 +1,80 @@
 
+const firebaseConfig = {
+  apiKey: "AIzaSyBHIc2E4XwRO5FXo4uHlTQVRArOis73MjE",
+  authDomain: "projeto-deus-yato-928-sk-default-rtdb.firebaseapp.com",
+  projectId: "projeto-deus-yato-928-sk-default-rtdb",
+  storageBucket: "projeto-deus-yato-928-sk-default-rtdb.appspot.com",
+  messagingSenderId: "790408726854",
+  appId: "1:790408726854:android:e2f0de7b7d5dba96b0fd47"
+};
+firebase.initializeApp(firebaseConfig);
 const storage = firebase.storage();
-const folderListEl = document.getElementById("folderList");
-const selectedFolderEl = document.getElementById("selectedFolder");
-const galleryEl = document.getElementById("gallery");
-const lightbox = document.getElementById("lightbox");
-const lightboxImg = document.getElementById("lightboxImg");
 
-let folders = new Set();
+let currentFolder = "";
+const folders = new Set();
 
 function createFolder() {
-  const folder = document.getElementById("newFolder").value.trim();
-  if (!folder || folders.has(folder)) return;
-  folders.add(folder);
-  updateFolderUI();
+  const folder = document.getElementById("folderName").value.trim();
+  if (!folder) return alert("Digite um nome para a pasta");
+
+  const placeholderRef = storage.ref(`imagens/${folder}/.placeholder.txt`);
+  const blob = new Blob(["pasta criada"], { type: "text/plain" });
+
+  placeholderRef.put(blob).then(() => {
+    folders.add(folder);
+    updateFolderUI();
+    alert("✅ Pasta criada com sucesso!");
+  });
 }
 
 function updateFolderUI() {
-  folderListEl.innerHTML = "";
-  selectedFolderEl.innerHTML = "";
+  const container = document.getElementById("folders");
+  container.innerHTML = "";
   folders.forEach(folder => {
-    const li = document.createElement("li");
-    li.textContent = folder;
-    li.onclick = () => {
-      selectedFolderEl.value = folder;
-      loadImages();
-    };
-    folderListEl.appendChild(li);
-
-    const option = document.createElement("option");
-    option.value = folder;
-    option.textContent = folder;
-    selectedFolderEl.appendChild(option);
+    const btn = document.createElement("button");
+    btn.textContent = folder;
+    btn.onclick = () => loadImages(folder);
+    container.appendChild(btn);
   });
 }
 
-function uploadImages() {
-  const folder = selectedFolderEl.value;
-  const files = document.getElementById("imageInput").files;
-  if (!folder || files.length === 0) return alert("Selecione pasta e imagens");
-  Array.from(files).forEach(file => {
-    const ref = storage.ref(`imagens/${folder}/${file.name}`);
-    ref.put(file).then(loadImages);
+function uploadImage() {
+  const file = document.getElementById("imageUpload").files[0];
+  if (!file || !currentFolder) return alert("Selecione uma pasta e uma imagem");
+
+  const ref = storage.ref(`imagens/${currentFolder}/${file.name}`);
+  ref.put(file).then(() => {
+    alert("✅ Imagem enviada!");
+    loadImages(currentFolder);
   });
 }
 
-function loadImages() {
-  const folder = selectedFolderEl.value;
-  if (!folder) return;
+function loadImages(folder) {
+  currentFolder = folder;
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
+
   const listRef = storage.ref(`imagens/${folder}`);
-  galleryEl.innerHTML = "<p>Carregando imagens...</p>";
   listRef.listAll().then(res => {
-    galleryEl.innerHTML = "";
-    res.items.forEach(item => {
-      item.getDownloadURL().then(url => {
+    res.items.forEach(itemRef => {
+      if (itemRef.name === ".placeholder.txt") return;
+      itemRef.getDownloadURL().then(url => {
         const img = document.createElement("img");
         img.src = url;
-        img.onclick = () => openLightbox(url);
-        img.title = item.name;
-
-        const btn = document.createElement("button");
-        btn.textContent = "Excluir";
-        btn.onclick = () => {
-          storage.ref(item.fullPath).delete().then(loadImages);
-        };
-
-        const div = document.createElement("div");
-        div.style.position = "relative";
-        div.appendChild(img);
-        div.appendChild(btn);
-        galleryEl.appendChild(div);
+        gallery.appendChild(img);
       });
     });
   });
 }
 
-function openLightbox(url) {
-  lightbox.style.display = "flex";
-  lightboxImg.src = url;
+// Carregar pastas já criadas
+function loadFolders() {
+  const listRef = storage.ref("imagens");
+  listRef.listAll().then(res => {
+    res.prefixes.forEach(folderRef => {
+      folders.add(folderRef.name);
+    });
+    updateFolderUI();
+  });
 }
-
-function closeLightbox() {
-  lightbox.style.display = "none";
-}
+loadFolders();
